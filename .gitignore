@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Log files
+*.log
+
+# Project specific
+call_from_twilio.py
+
+# Flask specific
+.venv
+.env
+instance/
+*.db
+
+# Pytest / test cache
+.pytest_cache/
+.tox/
+.coverage
+coverage.xml
+htmlcov/
+
+
+# VS Code
+.vscode/
