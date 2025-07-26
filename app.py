@@ -38,7 +38,7 @@ load_dotenv()  # Loads variables from .env into os.environ
 
 # Configure Gemini
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-2.0-flash')
 call_sessions = {}
 
 # Function to extract order from user text using Gemini
@@ -91,6 +91,7 @@ def build_confirmation_text(order):
 
 @app.route("/voice", methods=['GET', 'POST'])
 def voice():
+    print("Start")
     response = VoiceResponse()
     gather = Gather(
         input='speech',
@@ -108,12 +109,15 @@ def voice():
 
 @app.route("/process_speech", methods=['POST'])
 def process_speech():
+    print("process_speech")
+
     call_id = request.form.get("CallSid")
     transcript = request.form.get('SpeechResult', '')
     # print("\n👋 User said:", transcript , end="\n\n")
     app_logger.info(f"[User] {transcript}")
 
     order = extract_order(transcript)
+    print(order)
 
     # Save to DB
     existing = CallSession.query.filter_by(call_sid=call_id).first()
@@ -127,6 +131,7 @@ def process_speech():
 
     # Confirm the order with the user
     confirmation = build_confirmation_text(order)
+    print(confirmation)
     response = VoiceResponse()
     gather = Gather(
         input='speech',
@@ -140,6 +145,7 @@ def process_speech():
     gather.say(confirmation, voice='man', language='en-US')
     response.append(gather)
     response.say("I didn’t catch that. Please say yes or no.")
+    print("Done")
     return Response(str(response), mimetype='text/xml')
 
 @app.route("/confirm_order", methods=['POST'])
