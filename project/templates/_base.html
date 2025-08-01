@@ -1,0 +1,199 @@
+{% load compress %}
+{% load static %}
+
+{% comment %} {% load custom_filters %} {% endcomment %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan & Win</title>
+    
+    <!-- Tailwind CSS -->
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'src/output.css' %}">
+    {% endcompress %}
+
+    <!-- Font Awesome -->
+    <link href="{% static 'fontawsome/css/fontawesome.css' %}" rel="stylesheet">
+    <link href="{% static 'fontawsome/css/brands.css' %}" rel="stylesheet">
+    <link href="{% static 'fontawsome/css/solid.css' %}" rel="stylesheet">
+
+    <!-- Google Font (Poppins) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    
+    {% block head %}{% endblock head %}
+
+</head>
+
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav>
+        <a href="/" class="h-full flex items-center"> <img src="{% static "images/logo.png" %}" alt="" class="max-h-[45%]"> </a>
+
+        <ul id="nav-links" class="nav-links">
+
+            <li><a href="/"> Home </a></li>
+            <li><a href="/contact/"> Contact </a></li>
+            <li><a href="/profile/"> Profile </a> </li>
+
+            {% if request.user.is_superuser %}
+
+            <li> <a href="/admin_support/"> Support </a> </li>
+            <li> <a href="/admin/table/Chapter/"> Admin </a> </li>
+
+            {% else %}
+
+            <li> <a href="/support/"> Support </a> </li>
+
+            {% endif %}
+        </ul>
+    </nav>
+    
+    <!-- Hamburger menu for smaller devices -->
+    {% comment %} <a href="#" class="hamburger flex sm:hidden">
+        <span></span>
+        <span></span>
+        <span></span>
+    </a> {% endcomment %}
+    <a href="javascript:void(0);" class="hamburger flex lg:hidden z-40">
+        <span></span>
+        <span></span>
+        <span></span>
+    </a>
+
+    {% block main %} {% endblock main %}
+
+
+
+    <!-- Manage django-messages -->
+    {% if messages %}
+    <ul class="messages absolute flex flex-col top-0 items-end w-full gap-1 p-2 z-20 overflow-hidden">
+        {% for message in messages %}
+        <li class="message flex rounded-md justify-between w-96 border border-l-2 text-slate-900 !bg-white z-20
+            {% if message.tags == 'error' %} border-l-red-400 text-red-400 
+            {% elif message.tags == 'info' %} border-l-blue-400 
+            {% elif message.tags == 'success' %} border-l-green-400 
+            {% endif %}
+        ">
+            <span class="message-text p-4 ">
+            {{ message }}
+            </span>
+            <button class="msg-destroy-btn !text-slate-500 p-4 hover:bg-slate-100"><i class="fa-solid fa-x"></i></button>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <footer class="border-t mt-24">
+        <div class="flex flex-col sm:flex-row w-full p-4 sm:p-8 justify-between h-full">
+            <a href="/" class="flex items-center self-center max-w-[20%]"> <img src="{% static "images/logo.png" %}" alt="" class=""> </a>
+
+            <ul class="flex flex-col gap-2 font-light">
+                <h2 class="font-medium">Pages</h2>
+
+                <li class><a href="/">Home</a></li>
+                <li> <a href="/contact/"> Contact </a> </li>
+                <li> <a href="/profile/"> Profile </a> </li>
+                {% if request.user.is_superuser %}
+                <li> <a href="/admin/"> Admin </a> </li>
+                {% else %}
+                <li> <a href="/support/"> Support </a> </li>
+                {% endif %}
+            </ul>
+
+            <div class="flex flex-col gap-4 font-light pt-8 sm:p-0">
+                <h2 class="font-medium">Contact</h2>
+                <div> <i class="fa-solid fa-phone w-6 text-center"></i> 999-9999-999 </div>
+                <div> <i class="fa-solid fa-envelope w-6 text-center"></i> example@gmail.com </div>
+                <div> <i class="fa-solid fa-location-dot w-6 text-center"></i> 123 Lorem ipsum Rd. Santa Ana Illinois 8989 </div>
+            </div>
+
+            <div class="flex gap-2 h-full mt-auto pt-8 sm:p-0">
+                <a href="https://www.instagram.com/" class="text-2xl hover:bg-gray-800 border border-gray-700 aspect-square w-14 rounded-full flex justify-center items-center">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+                <a href="/" class="text-2xl hover:bg-gray-800 border border-gray-700 aspect-square w-14 rounded-full flex justify-center items-center">
+                    <i class="fa-brands fa-facebook"></i>
+                </a>
+                <a href="/" class="text-2xl hover:bg-gray-800 border border-gray-700 aspect-square w-14 rounded-full flex justify-center items-center">
+                    <i class="fa-brands fa-twitter"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center pb-4 text-black/70">
+            <p>
+                Copyright {% now "Y" %} © Epoxy214
+            </p>
+            <p>
+                All Right Reserved.
+            </p>
+        </div>
+    </footer>
+    
+</body>
+
+
+<script>
+    {% block script %}{% endblock script %}
+    
+    // Responsive Navbar
+    const hamburger = document.getElementsByClassName("hamburger")[0];
+    const navLinks = document.getElementById("nav-links");
+
+    hamburger.addEventListener('click', () => {
+        // for (let i = 0; i < navLinks.length; i++) {
+        //     const element = navLinks[i];
+        //     element.classList.toggle('active');
+        // }
+        navLinks.classList.toggle('active');
+    });
+
+    // Messages
+    const messages = document.getElementsByClassName("message");
+
+    for (let i = 0; i < messages.length; i++) { 
+        const message = messages[i];
+
+        let cutBtn = message.querySelector('.msg-destroy-btn')
+
+        cutBtn.onclick = () => {
+            message.style.display = "none";
+        }
+    }
+
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const hamburger = document.getElementsByClassName("hamburger")[0];
+        const navLinks = document.getElementsByClassName("nav-links")[0];
+        const navLinkItems = document.querySelectorAll('.nav-link a');
+
+        hamburger.addEventListener('click', function () {
+            if (navLinks.style.display === "none" || navLinks.style.display === "") {
+                navLinks.style.display = "flex";
+            } else {
+                navLinks.style.display = "none";
+            }
+        });
+
+    });
+
+
+</script>
+
+
+</html>
