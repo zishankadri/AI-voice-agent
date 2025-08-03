@@ -1,0 +1,64 @@
+# Python
+# Byte-code files
+*.pyc
+__pycache__/
+*.pyd
+*.pyo
+
+# Distribution / packaging
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+eggs/
+.eggs/
+*.egg-info/
+.install.log
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+.ruff_cache/
+
+# Logs
+*.log
+log/
+logs/
+
+# Environment variables
+.env
+.flaskenv
+
+# Django
+# Database
+db.sqlite3
+*.sqlite3
+
+# Static and media files
+/static/
+/media/
+
+# Local settings
+local_settings.py
+call_from_twilio.py
+
+# Editor backup files
+*.swp
+*~
+.DS_Store # macOS
+Thumbs.db # Windows
+
+# IDE-specific files
+.idea/           # PyCharm
+.vscode/         # VS Code
+.history/        # VS Code Local History
+*.sublime-project
+*.sublime-workspace
