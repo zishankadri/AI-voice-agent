@@ -23,6 +23,7 @@ class Order(models.Model):
         default=StatusEnum.PENDING
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f"Order #{self.id} - {self.status}"
@@ -51,3 +52,12 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.menu_item.name} (Order #{self.order.id})"
+
+
+# models.py
+class AdminSetting(models.Model):
+    key = models.CharField(max_length=100, unique=True)
+    value = models.TextField()
+
+    def __str__(self):
+        return self.key

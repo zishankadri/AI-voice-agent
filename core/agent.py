@@ -149,7 +149,7 @@ def ask_agent(session_id: str, user_id: str, text: str, runner: Runner=runner): 
             # Only print text parts
             for part in ev.content.parts:
                 if hasattr(part, 'text') and part.text:
-                    log.info(f"🤖 [AI] {part.text}")
+                    # log.info(f"🤖 [AI] {part.text}")
                     return part.text
 
 

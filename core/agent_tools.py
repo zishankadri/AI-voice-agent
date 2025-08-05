@@ -8,7 +8,7 @@ import json
 from .logger import get_logger
 log = get_logger()
 
-from .models import Order, OrderItem, MenuItem  # Adjust path
+from .models import Order, OrderItem, MenuItem, StatusEnum  # Adjust path
 
 # ------------------ 🤝 Helpers ------------------ 
 def get_or_create_order(call_sid: str) -> Order:
@@ -60,8 +60,6 @@ def create_or_modify_order(
         Dict[str, Any]: A dictionary indicating the success or failure of the operation,
                         and potentially details about the order.
     """
-    print("hell ")
-    print("hell ")
     log.info(f"[items] {items}")
     log.info(f"[modifications] {modifications}")
     log.info(f"[session_id] {session_id}")
@@ -107,7 +105,8 @@ def create_or_modify_order(
                 "quantity": quantity,
                 "modifications": item_modifications
             })
-
+        order.conversation += f"\t✅ [create_or_modify_order] 200 Success\n"
+        order.save()
         log.info(f"[create_or_modify_order] 200 {session_id}")
         return {
             "status": "success",
@@ -116,7 +115,9 @@ def create_or_modify_order(
         }
 
     except Exception as e:
-        log.exception(f"[create_or_modify_order] 402 Exception {e} {session_id}")
+        order.conversation += f"\t❌ [create_or_modify_order] 402 Exception {e} {session_id}\n"
+        order.save()
+        # log.exception(f"[create_or_modify_order] 402 Exception {e} {session_id}")
         return {"status": "error", "message": f"An unexpected error occurred: {e}"}
 
 
@@ -132,17 +133,20 @@ def confirm_order(session_id: str) -> dict[str, Any]:
                         and potentially details about the order.
     """
     try:
-        order = Order.objects.filter(call_sid=session_id).first()
+        order = get_or_create_order(session_id)
         if not order:
             return {"status": "error", "message": "Order not found."}
 
-        order.confirmed = True  # assuming you have a `confirmed` field
-        order.save()
+        order.status = StatusEnum.CONFIRMED  # assuming you have a `confirmed` field
 
+        order.conversation += f"\t✅ [confirm_order] 200 Success\n"
+        order.save()
         log.info(f"[confirm_order] 200 {session_id}")
         return {"status": "success", "message": "Order confirmed."}
     except Exception as e:
-        log.exception(f"[confirm_order] error {e}")
+        order.conversation += f"\t❌ [confirm_order] error {e}\n"
+        order.save()
+        # log.exception(f"[confirm_order] error {e}")
         return {"status": "error", "message": f"Could not confirm order: {e}"}
 
 
@@ -158,16 +162,19 @@ def set_address(session_id: str, address: str) -> dict[str, Any]:
         Dict[str, Any]: A dictionary indicating the success or failure of the operation,
     """
     try:
-        order = Order.objects.filter(call_sid=session_id).first()
+        order = get_or_create_order(session_id)
         if not order:
             return {"status": "error", "message": "Order not found."}
 
         order.address = address  # assuming you have an `address` field
-        order.save()
 
-        log.info(f"[set_address] 200 {session_id}")
+        order.conversation += f"\t✅ [set_address] 200 Success\n"
+        order.save()
+        # log.info(f"[set_address] 200 {session_id}")
         return {"status": "success", "message": "Address set successfully."}
     except Exception as e:
-        log.exception(f"[set_address] error {e}")
+        order.conversation += f"\t❌ [set_address] error {e}\n"
+        order.save()
+        # log.exception(f"[set_address] error {e}")
         return {"status": "error", "message": f"Could not set address: {e}"}
 

@@ -4,8 +4,6 @@ from django.views.decorators.csrf import csrf_exempt
 from twilio.twiml.voice_response import VoiceResponse, Gather
 from dotenv import load_dotenv
 import google.generativeai as genai
-from .models import Order, OrderItem, MenuItem  # update import path
-from .agent import get_or_create_agent_session, ask_agent  # same here
 
 from .logger import get_logger
 log = get_logger()
@@ -14,17 +12,17 @@ load_dotenv()
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel('gemini-2.0-flash')
 
+from .models import Order, OrderItem, MenuItem, AdminSetting  # update import path
+from .agent import get_or_create_agent_session, ask_agent  # same here
+
 USER_ID = "CUSTOMER"
 APP_NAME = "voice_agent"
 
 
-# --- DB session logic ---
-def get_or_create_db_session(call_sid):
-    session = Order.objects.filter(call_sid=call_sid).first()
-    if not session:
-        session = Order(call_sid=call_sid)
-        session.save()
-    return session
+# ------------------ 🤝 Helpers ------------------ 
+def get_or_create_order(call_sid: str) -> Order:
+    order, _ = Order.objects.get_or_create(call_sid=call_sid)
+    return order
 
 
 # --- Twilio voice start ---
@@ -36,9 +34,14 @@ def voice(request):
         input='speech',
         action='/process_speech/',
         method='POST',
+        timeout=15,
         speech_timeout='auto'
     )
-    response_text = "Hi! What would you like to order today?"
+    # Fetch greeting
+    greeting = AdminSetting.objects.get(key="GREETING")
+    # response_text = "Hi! What would you like to order today?"
+    response_text = greeting.value
+    
     gather.say(response_text, voice='man', language='en-US')
     log.info(f"[AI] {response_text}")
 
@@ -47,17 +50,25 @@ def voice(request):
     return HttpResponse(str(response), content_type='text/xml')
 
 
+
 # --- Process user input ---
 @csrf_exempt
 def process_speech(request):
-    log.info("Processing speech...")
+    """
+    Runs in a loop
+    """
 
     call_id = request.POST.get("CallSid")
+    log.info(f"Processing speech...{call_id = }")
+
     transcript = request.POST.get("SpeechResult", "")
 
-    log.info(f"👋 [User] {transcript}")
+    order = get_or_create_order(call_sid=call_id)
 
-    get_or_create_db_session(call_id)
+    if order:
+        order.conversation += f"👋 [User]: \n\t {transcript}\n🤖 [Agent]: \n"
+        order.save()
+
     get_or_create_agent_session(user_id=USER_ID, session_id=call_id)
 
     agent_response = ask_agent(
@@ -65,6 +76,11 @@ def process_speech(request):
         user_id=USER_ID,
         text=transcript,
     )
+
+    # Re-fetch to get the latest order state in case it was modified by a tool.
+    order = get_or_create_order(call_sid=call_id)  
+    order.conversation += f"\t{agent_response}\n"  # 🤖 [Agent] response
+    order.save()
 
     response = VoiceResponse()
     gather = Gather(
@@ -74,7 +90,7 @@ def process_speech(request):
         timeout=20,
         speech_timeout='auto'
     )
-    gather.say(agent_response)
+    gather.say(agent_response, voice='man', language='en-US')
     response.append(gather)
     response.say("I can't hear you, goodbye.")
     return HttpResponse(str(response), content_type='text/xml')
