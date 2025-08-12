@@ -9,11 +9,12 @@ from .logger import get_logger
 log = get_logger()
 
 load_dotenv()
+development = os.getenv('development')
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel('gemini-2.0-flash')
 
-from .models import Order, OrderItem, MenuItem, AdminSetting  # update import path
-from .agent import get_or_create_agent_session, ask_agent  # same here
+from .models import Order, OrderItem, MenuItem, AdminSetting, StatusEnum  # update import path
+from .agent import get_or_create_agent_session, ask_agent, get_runner_for_phone  # same here
 
 USER_ID = "CUSTOMER"
 APP_NAME = "voice_agent"
@@ -61,6 +62,10 @@ def process_speech(request):
     call_id = request.POST.get("CallSid")
     log.info(f"Processing speech...{call_id = }")
 
+    # Our Twillio phone number
+    if development: to_number = request.POST.get("From")
+    else: to_number = request.POST.get("To")
+
     transcript = request.POST.get("SpeechResult", "")
 
     order = get_or_create_order(call_sid=call_id)
@@ -69,12 +74,14 @@ def process_speech(request):
         order.conversation += f"👋 [User]: \n\t {transcript}\n🤖 [Agent]: \n"
         order.save()
 
+    # TODO: 
     get_or_create_agent_session(user_id=USER_ID, session_id=call_id)
 
     agent_response = ask_agent(
         session_id=call_id,
         user_id=USER_ID,
         text=transcript,
+        phone=to_number,
     )
 
     # Re-fetch to get the latest order state in case it was modified by a tool.
@@ -83,14 +90,20 @@ def process_speech(request):
     order.save()
 
     response = VoiceResponse()
-    gather = Gather(
-        input='speech',
-        action='/process_speech/',
-        method='POST',
-        timeout=20,
-        speech_timeout='auto'
-    )
-    gather.say(agent_response, voice='man', language='en-US')
-    response.append(gather)
-    response.say("I can't hear you, goodbye.")
+
+    if order.status == StatusEnum.CONFIRMED:
+        # Say agent response then hang up immediately
+        response.say(agent_response, voice='man', language='en-US')
+        response.hangup()
+    else:
+        gather = Gather(
+            input='speech',
+            action='/process_speech/',
+            method='POST',
+            timeout=20,
+            speech_timeout='auto'
+        )
+        gather.say(agent_response, voice='man', language='en-US')
+        response.append(gather)
+        response.say("I can't hear you, goodbye.")
     return HttpResponse(str(response), content_type='text/xml')

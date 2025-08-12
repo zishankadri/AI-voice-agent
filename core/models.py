@@ -14,7 +14,17 @@ class StatusEnum(models.TextChoices):
     FAILED = "FAILED", "Failed"
 
 
+class Restaurant(models.Model):
+    name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Order(models.Model):
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, null=True, blank=True)
+
     call_sid = models.CharField(max_length=64, unique=True)
     conversation = models.TextField(default="", blank=True)
     status = models.CharField(
@@ -24,17 +34,31 @@ class Order(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     address = models.CharField(max_length=255, blank=True, null=True)
+    order_type = models.CharField(max_length=32)
 
     def __str__(self):
-        return f"Order #{self.id} - {self.status}"
+        return f"Order #{self.id}"
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.name}"
 
 
 class MenuItem(models.Model):
+    # restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='menu_items')
+    # category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='menu_items')
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, null=True, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True)
+
     name = models.CharField(max_length=100)
     price = models.FloatField()
 
     def __str__(self):
-        return self.name
+        return f"{self.name}"
+
 
 
 class OrderItem(models.Model):
@@ -53,6 +77,7 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.menu_item.name} (Order #{self.order.id})"
 
+    
 
 # models.py
 class AdminSetting(models.Model):

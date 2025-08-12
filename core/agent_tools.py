@@ -149,10 +149,38 @@ def confirm_order(session_id: str) -> dict[str, Any]:
         # log.exception(f"[confirm_order] error {e}")
         return {"status": "error", "message": f"Could not confirm order: {e}"}
 
+def set_order_type(session_id: str, order_type: str) -> dict[str, Any]:
+    """Set the type of the order (e.g., 'delivery', 'pickup', 'table booking').
+
+    Args:
+        session_id (str): A unique identifier for the order.
+                         This will serve as the primary key for the order.
+        order_type (str): The type of the order, 'delivery', 'pickup' or 'table booking' nothing else is allowed.
+    Returns:
+        Dict[str, Any]: A dictionary indicating the success or failure of the operation,
+                        and potentially details about the order.
+    """
+    try:
+        order = get_or_create_order(session_id)
+        if not order:
+            return {"status": "error", "message": "Order not found."}
+
+        order.order_type = order_type  # assuming you have an `order_type` field
+
+        order.conversation += f"\t✅ [set_order_type] 200 Success\n"
+        order.save()
+        # log.info(f"[set_order_type] 200 {session_id}")
+        return {"status": "success", "message": "Order type set successfully."}
+    except Exception as e:
+        order.conversation += f"\t❌ [set_order_type] error {e}\n"
+        order.save()
+        # log.exception(f"[set_order_type] error {e}")
+        return {"status": "error", "message": f"Could not set order type: {e}"}
+
 
 @to_async
 def set_address(session_id: str, address: str) -> dict[str, Any]:
-    """Mark an order as cofirmed so that the kichen team can start prepairing.
+    """Set address for an order with order type 'delivery'.
 
     Args:
         session_id (str): A unique identifier for the order.
@@ -178,3 +206,18 @@ def set_address(session_id: str, address: str) -> dict[str, Any]:
         # log.exception(f"[set_address] error {e}")
         return {"status": "error", "message": f"Could not set address: {e}"}
 
+@to_async
+def set_table_booking(session_id: str, no_of_people: int, time: str) -> dict[str, Any]:
+    pass
+
+@to_async
+def set_pick_up_branch(session_id: str, no_of_people: int, time: str) -> dict[str, Any]:
+    pass
+
+@to_async
+def transfer_to_human(session_id: str) -> dict[str, Any]:
+    pass
+
+@to_async
+def call_back(session_id: str) -> dict[str, Any]:
+    pass
