@@ -12,6 +12,7 @@ class StatusEnum(models.TextChoices):
     COMPLETED = "COMPLETED", "Completed"
     CANCELLED = "CANCELLED", "Cancelled"
     FAILED = "FAILED", "Failed"
+    CALL_BACK_REQUESTED= "CALL_BACK_REQUESTED", "Call Back Requested"
 
 
 class Restaurant(models.Model):
@@ -34,8 +35,18 @@ class Order(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     address = models.CharField(max_length=255, blank=True, null=True)
-    order_type = models.CharField(max_length=32)
+    order_type = models.CharField(
+        max_length=32,
+        choices=[('delivery', 'Delivery'), ('pickup', 'Pickup'), ('table_booking', 'Table Booking')],
+        blank=True,
+        null=True
+    )
 
+    no_of_people = models.PositiveIntegerField(blank=True, null=True)  # for table bookings
+    booking_time = models.DateTimeField(blank=True, null=True)         # for table bookings
+    pickup_branch = models.CharField(max_length=255, blank=True, null=True)  # for pickup orders
+    pickup_time = models.DateTimeField(blank=True, null=True)               # for pickup orders
+    
     def __str__(self):
         return f"Order #{self.id}"
 

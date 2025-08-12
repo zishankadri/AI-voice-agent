@@ -208,16 +208,108 @@ def set_address(session_id: str, address: str) -> dict[str, Any]:
 
 @to_async
 def set_table_booking(session_id: str, no_of_people: int, time: str) -> dict[str, Any]:
-    pass
+    """
+    Sets a table booking for a specific order session.
+
+    Args:
+        session_id (str): Unique identifier for the order session.
+        no_of_people (int): Number of people for the table booking.
+        time (str): The booking time (preferably ISO 8601 string).
+
+    Returns:
+        dict[str, Any]: A dictionary indicating success or failure of setting the booking,
+                        including relevant messages.
+    """
+    try:
+        order = get_or_create_order(session_id)
+        if not order:
+            return {"status": "error", "message": "Order not found."}
+
+        order.order_type = 'table_booking'
+        order.no_of_people = no_of_people  # make sure field exists
+        order.booking_time = time          # make sure field exists (DateTimeField preferred, parse time accordingly)
+
+        order.conversation += f"\t✅ [set_table_booking] 200 Success\n"
+        order.save()
+        log.info(f"[set_table_booking] 200 {session_id}")
+        return {"status": "success", "message": "Table booking set successfully."}
+    except Exception as e:
+        order.conversation += f"\t❌ [set_table_booking] error {e}\n"
+        order.save()
+        log.exception(f"[set_table_booking] error {e}")
+        return {"status": "error", "message": f"Could not set table booking: {e}"}
+
 
 @to_async
-def set_pick_up_branch(session_id: str, no_of_people: int, time: str) -> dict[str, Any]:
-    pass
+def set_pick_up_branch(session_id: str, branch_name: str, time: str) -> dict[str, Any]:
+    """
+    Sets the pickup branch and pickup time for an order.
+
+    Args:
+        session_id (str): Unique identifier for the order session.
+        branch_name (str): Name of the pickup branch chosen by the customer.
+        time (str): The pickup time (preferably ISO 8601 string).
+
+    Returns:
+        dict[str, Any]: A dictionary indicating success or failure of setting pickup details,
+                        including relevant messages.
+    """
+    try:
+        order = get_or_create_order(session_id)
+        if not order:
+            return {"status": "error", "message": "Order not found."}
+
+        order.order_type = 'pickup'
+        order.pickup_branch = branch_name  # ensure this field exists
+        order.pickup_time = time            # parse to DateTime if needed
+
+        order.conversation += f"\t✅ [set_pick_up_branch] 200 Success\n"
+        order.save()
+        log.info(f"[set_pick_up_branch] 200 {session_id}")
+        return {"status": "success", "message": "Pickup branch and time set successfully."}
+    except Exception as e:
+        order.conversation += f"\t❌ [set_pick_up_branch] error {e}\n"
+        order.save()
+        log.exception(f"[set_pick_up_branch] error {e}")
+        return {"status": "error", "message": f"Could not set pickup branch: {e}"}
 
 @to_async
 def transfer_to_human(session_id: str) -> dict[str, Any]:
-    pass
+    """
+    Marks the current order/session to be handled by a human agent.
+
+    Args:
+        session_id (str): Unique identifier for the order session.
+
+    Returns:
+        dict[str, Any]: A dictionary indicating success or failure of the transfer request,
+                        including relevant messages.
+    """
 
 @to_async
 def call_back(session_id: str) -> dict[str, Any]:
-    pass
+    """
+    Flags the current order/session as requiring a callback from the restaurant.
+
+    Args:
+        session_id (str): Unique identifier for the order session.
+
+    Returns:
+        dict[str, Any]: A dictionary indicating success or failure of the callback request,
+                        including relevant messages.
+    """
+    try:
+        order = get_or_create_order(session_id)
+        if not order:
+            return {"status": "error", "message": "Order not found."}
+
+        order.status = StatusEnum.CALL_BACK_REQUESTED  # You need to define this enum value
+        order.conversation += f"\t✅ [call_back] 200 Success\n"
+        order.save()
+        log.info(f"[call_back] 200 {session_id}")
+        return {"status": "success", "message": "Callback requested."}
+    except Exception as e:
+        order.conversation += f"\t❌ [call_back] error {e}\n"
+        order.save()
+        log.exception(f"[call_back] error {e}")
+        return {"status": "error", "message": f"Could not request callback: {e}"}
