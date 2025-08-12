@@ -86,7 +86,7 @@ def process_speech(request):
     )
 
     # Re-fetch to get the latest order state in case it was modified by a tool.
-    order = get_or_create_order(call_sid=call_id)  
+    order = get_or_create_order(call_sid=call_id, phone_number=to_number)  
     order.conversation += f"\t{agent_response}\n"  # 🤖 [Agent] response
     order.save()
 
