@@ -1,14 +1,21 @@
 import asyncio
 from asgiref.sync import sync_to_async
 from difflib import get_close_matches
-from typing import Callable, Any
+from typing import Callable, Any, Dict
 import functools
 import json
 
 from .logger import get_logger
 log = get_logger()
 
-from .models import Order, OrderItem, MenuItem, StatusEnum  # Adjust path
+from .models import (
+    Restaurant,
+    Order,
+    Category,
+    OrderItem,
+    MenuItem,
+    StatusEnum,
+)
 
 # ------------------ 🤝 Helpers ------------------ 
 def get_or_create_order(call_sid: str) -> Order:
@@ -26,8 +33,13 @@ def find_menu_item_by_name(name: str) -> MenuItem | None:
 
 def to_async(func: Callable[..., Any]) -> Callable[..., Any]:
     """
-    A decorator to convert a synchronous function into an asynchronous one
-    suitable for use as a Google ADK tool, by wrapping it with sync_to_async.
+    Fetches the menu from the database for a restaurant identified by its phone number.
+
+    Args:
+        phone_number (str): The phone number of the restaurant.
+
+    Returns:
+        str: A formatted string of the menu, grouped by category, with each item and its price.
     """
     @functools.wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -35,10 +47,56 @@ def to_async(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 # ------------------ 🛠️ Tools ------------------ 
+
+
+def format_menu_for_instructions(menu_dict):
+    log.info(type(menu_dict))
+    log.info(menu_dict)
+    menu_string = ""
+    for category, items in menu_dict.items():
+        menu_string += f"**{category}:**\n"
+        for item, price in items.items():
+            menu_string += f"- {item}: ${price:.2f}\n"
+        menu_string += "\n" # Add a newline for separation between categories
+    return menu_string
+
+@to_async
+def get_menu(phone_number: str) -> Dict[str, Dict[str, Any]]:
+    """
+    Fetches the menu from the database for a restaurant identified by its phone number.
+
+    This function is designed to be called from an asynchronous agent. The
+    @to_async decorator handles running the synchronous database queries
+    on a background thread.
+
+    Args:
+        phone_number (str): The phone number of the restaurant.
+
+    Returns:
+        Dict[str, Dict[str, Any]]: A dictionary representing the menu,
+                                    grouped by category, with each item and its price.
+    """
+    menu_dict = {}
+    print(phone_number)
+    log.info(f"Fetching restaurant for phone number: '{phone_number}'")
+    restaurant = Restaurant.objects.get(phone_number=phone_number)
+    print(f"{restaurant = }")
     
+    categories = Category.objects.filter(menuitem__restaurant=restaurant).distinct()
+    log.info(f"categories: {categories}")
+
+    for category in categories:
+        items = MenuItem.objects.filter(restaurant=restaurant, category=category)
+        if items.exists():
+            menu_dict[category.name] = {item.name: item.price for item in items}
+
+    print(menu_dict)
+    log.info(menu_dict)
+    return menu_dict
+
 # @transaction.atomic
 @to_async
-def create_or_modify_order(
+def set_or_modify_items(
     session_id: str,
     items: list[dict[str, Any]],
     modifications: list[dict[str, Any]] = []
@@ -149,6 +207,7 @@ def confirm_order(session_id: str) -> dict[str, Any]:
         # log.exception(f"[confirm_order] error {e}")
         return {"status": "error", "message": f"Could not confirm order: {e}"}
 
+@to_async
 def set_order_type(session_id: str, order_type: str) -> dict[str, Any]:
     """Set the type of the order (e.g., 'delivery', 'pickup', 'table booking').
 
@@ -214,7 +273,7 @@ def set_table_booking(session_id: str, no_of_people: int, time: str) -> dict[str
     Args:
         session_id (str): Unique identifier for the order session.
         no_of_people (int): Number of people for the table booking.
-        time (str): The booking time (preferably ISO 8601 string).
+        time (str): The booking time.
 
     Returns:
         dict[str, Any]: A dictionary indicating success or failure of setting the booking,
@@ -248,7 +307,7 @@ def set_pick_up_branch(session_id: str, branch_name: str, time: str) -> dict[str
     Args:
         session_id (str): Unique identifier for the order session.
         branch_name (str): Name of the pickup branch chosen by the customer.
-        time (str): The pickup time (preferably ISO 8601 string).
+        time (str): The pickup time whatever the user said.
 
     Returns:
         dict[str, Any]: A dictionary indicating success or failure of setting pickup details,
@@ -276,15 +335,15 @@ def set_pick_up_branch(session_id: str, branch_name: str, time: str) -> dict[str
 @to_async
 def transfer_to_human(session_id: str) -> dict[str, Any]:
     """
-    Marks the current order/session to be handled by a human agent.
+    Transfers the current conversation to a human agent for further assistance.
 
     Args:
-        session_id (str): Unique identifier for the order session.
+        session_id (str): A unique identifier for the current session.
 
     Returns:
-        dict[str, Any]: A dictionary indicating success or failure of the transfer request,
-                        including relevant messages.
+        Dict[str, Any]: A dictionary indicating the success or failure of the transfer request.
     """
+    pass
 
 @to_async
 def call_back(session_id: str) -> dict[str, Any]:

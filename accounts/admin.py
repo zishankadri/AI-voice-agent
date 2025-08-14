@@ -70,4 +70,8 @@ class UserAccountAdmin(BaseUserAdmin, ModelAdmin):
     search_fields = ('email',)
     ordering = ('email',)
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.exclude(email='aivoiceapp@gmail.com')
+
 admin.site.register(UserAccount, UserAccountAdmin)

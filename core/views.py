@@ -14,7 +14,7 @@ genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel('gemini-2.0-flash')
 
 from .models import Order, Restaurant, AdminSetting, StatusEnum  # update import path
-from .agent import get_or_create_agent_session, ask_agent, get_runner_for_phone  # same here
+from .agent import get_or_create_agent_session, ask_agent  # same here
 
 USER_ID = "CUSTOMER"
 APP_NAME = "voice_agent"
@@ -23,7 +23,10 @@ APP_NAME = "voice_agent"
 # ------------------ 🤝 Helpers ------------------ 
 def get_or_create_order(call_sid: str, phone_number: str) -> Order:
     restaurant = Restaurant.objects.get(phone_number=phone_number)
-    order, _ = Order.objects.get_or_create(call_sid=call_sid)
+    order, _ = Order.objects.get_or_create(
+        call_sid=call_sid,
+        restaurant=restaurant,
+    )
     return order
 
 
@@ -76,7 +79,7 @@ def process_speech(request):
         order.save()
 
     # TODO: 
-    get_or_create_agent_session(user_id=USER_ID, session_id=call_id)
+    get_or_create_agent_session(user_id=USER_ID, session_id=call_id, phone_number=to_number)
 
     agent_response = ask_agent(
         session_id=call_id,
@@ -84,7 +87,7 @@ def process_speech(request):
         text=transcript,
         phone=to_number,
     )
-
+    log.info(f"success {agent_response}")
     # Re-fetch to get the latest order state in case it was modified by a tool.
     order = get_or_create_order(call_sid=call_id, phone_number=to_number)  
     order.conversation += f"\t{agent_response}\n"  # 🤖 [Agent] response

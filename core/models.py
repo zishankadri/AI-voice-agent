@@ -43,9 +43,11 @@ class Order(models.Model):
     )
 
     no_of_people = models.PositiveIntegerField(blank=True, null=True)  # for table bookings
-    booking_time = models.DateTimeField(blank=True, null=True)         # for table bookings
+    booking_time = models.CharField(max_length=100, blank=True, null=True)
+    # booking_time = models.DateTimeField(blank=True, null=True)         # for table bookings
     pickup_branch = models.CharField(max_length=255, blank=True, null=True)  # for pickup orders
-    pickup_time = models.DateTimeField(blank=True, null=True)               # for pickup orders
+    # pickup_time = models.DateTimeField(blank=True, null=True)               # for pickup orders
+    pickup_time = models.CharField(max_length=100, blank=True, null=True)
     
     def __str__(self):
         return f"Order #{self.id}"
