@@ -9,7 +9,7 @@ from .logger import get_logger
 log = get_logger()
 
 load_dotenv()
-development = os.getenv('development')
+DEVELOPMENT = os.getenv("development", "false").lower() == "true"
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel('gemini-2.0-flash')
 
@@ -67,7 +67,9 @@ def process_speech(request):
     log.info(f"Processing speech...{call_id = }")
 
     # Our Twillio phone number
-    if development: to_number = request.POST.get("From")
+    if DEVELOPMENT: 
+        print("DEVELOPMENT")
+        to_number = request.POST.get("From")
     else: to_number = request.POST.get("To")
 
     transcript = request.POST.get("SpeechResult", "")

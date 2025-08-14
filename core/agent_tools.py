@@ -163,9 +163,9 @@ def set_or_modify_items(
                 "quantity": quantity,
                 "modifications": item_modifications
             })
-        order.conversation += f"\t✅ [create_or_modify_order] 200 Success\n"
+        order.conversation += f"\t✅ [set_or_modify_items] 200 Success\n"
         order.save()
-        log.info(f"[create_or_modify_order] 200 {session_id}")
+        log.info(f"[set_or_modify_items] 200 {session_id}")
         return {
             "status": "success",
             "message": "Order created or modified successfully.",
@@ -173,9 +173,9 @@ def set_or_modify_items(
         }
 
     except Exception as e:
-        order.conversation += f"\t❌ [create_or_modify_order] 402 Exception {e} {session_id}\n"
+        order.conversation += f"\t❌ [set_or_modify_items] 402 Exception {e} {session_id}\n"
         order.save()
-        # log.exception(f"[create_or_modify_order] 402 Exception {e} {session_id}")
+        # log.exception(f"[set_or_modify_items] 402 Exception {e} {session_id}")
         return {"status": "error", "message": f"An unexpected error occurred: {e}"}
 
 
