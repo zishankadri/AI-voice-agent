@@ -101,6 +101,10 @@ def process_speech(request):
         # Say agent response then hang up immediately
         response.say(agent_response, voice='man', language='en-US')
         response.hangup()
+    elif order.status == StatusEnum.CALL_BACK_REQUESTED:
+        # Say agent response then hang up immediately
+        response.say(agent_response, voice='man', language='en-US')
+        response.hangup()
     else:
         gather = Gather(
             input='speech',
