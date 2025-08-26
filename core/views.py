@@ -77,7 +77,10 @@ def process_speech(request):
     else:
         to_number = request.POST.get("To")
         from_number = request.POST.get("From")
-
+    print(f"{from_number = }")
+    print(f"{to_number = }")
+    print("----------------")
+    print("----------------")
     transcript = request.POST.get("SpeechResult", "")
 
     order = get_or_create_order(
