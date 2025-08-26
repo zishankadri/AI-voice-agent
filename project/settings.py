@@ -177,3 +177,5 @@ UNFOLD = {
     "SITE_HEADER": "AI Voice Agent",
     "SITE_SUBHEADER": "Admin Dashboard",
 }
+
+DEBUG_PROPAGATE_EXCEPTIONS = True

@@ -25,7 +25,7 @@ class Restaurant(models.Model):
 
 class Order(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, null=True, blank=True)
-
+    customer_phone = models.CharField(max_length=20)
     call_sid = models.CharField(max_length=64, unique=True)
     conversation = models.TextField(default="", blank=True)
     status = models.CharField(

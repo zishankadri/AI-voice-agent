@@ -17,11 +17,23 @@ from .models import (
     StatusEnum,
 )
 
+# Scheduler
+from core.utils.scheduler import run_after_delay
+from core.utils.call_from_twillio import call
+
+
+
+# Schedule calls
+# run_after_delay(10 * 60, callback, user_id=123)      # 10 min
+# run_after_delay(30 * 60, callback, user_id=456)     # 30 min
+# run_after_delay(8 * 60 * 60, callback, user_id=789) # 8 hrs
+# run_after_delay(12 * 60 * 60, callback, user_id=999)# 12 hrs
+
 # ------------------ 🤝 Helpers ------------------ 
+
 def get_or_create_order(call_sid: str) -> Order:
     order, _ = Order.objects.get_or_create(call_sid=call_sid)
     return order
-
 
 def find_menu_item_by_name(name: str) -> MenuItem | None:
     all_names = MenuItem.objects.values_list('name', flat=True)
@@ -47,7 +59,6 @@ def to_async(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 # ------------------ 🛠️ Tools ------------------ 
-
 
 def format_menu_for_instructions(menu_dict):
     log.info(type(menu_dict))
@@ -236,7 +247,6 @@ def set_order_type(session_id: str, order_type: str) -> dict[str, Any]:
         # log.exception(f"[set_order_type] error {e}")
         return {"status": "error", "message": f"Could not set order type: {e}"}
 
-
 @to_async
 def set_address(session_id: str, address: str) -> dict[str, Any]:
     """Set address for an order with order type 'delivery'.
@@ -298,7 +308,6 @@ def set_table_booking(session_id: str, no_of_people: int, time: str) -> dict[str
         log.exception(f"[set_table_booking] error {e}")
         return {"status": "error", "message": f"Could not set table booking: {e}"}
 
-
 @to_async
 def set_pick_up_branch(session_id: str, branch_name: str, time: str) -> dict[str, Any]:
     """
@@ -332,6 +341,7 @@ def set_pick_up_branch(session_id: str, branch_name: str, time: str) -> dict[str
         log.exception(f"[set_pick_up_branch] error {e}")
         return {"status": "error", "message": f"Could not set pickup branch: {e}"}
 
+
 @to_async
 def transfer_to_human(session_id: str) -> dict[str, Any]:
     """
@@ -345,13 +355,15 @@ def transfer_to_human(session_id: str) -> dict[str, Any]:
     """
     pass
 
+
 @to_async
-def call_back(session_id: str) -> dict[str, Any]:
+def call_back(session_id: str, callback_delay_minutes: int) -> dict[str, Any]:
     """
     Flags the current order/session as requiring a callback from the restaurant.
 
     Args:
         session_id (str): Unique identifier for the order session.
+        callback_delay_minutes (int): Delay in minutes before the callback is initiated.
 
     Returns:
         dict[str, Any]: A dictionary indicating success or failure of the callback request,
@@ -361,14 +373,57 @@ def call_back(session_id: str) -> dict[str, Any]:
         order = get_or_create_order(session_id)
         if not order:
             return {"status": "error", "message": "Order not found."}
+        customer_phone = get_or_create_order(session_id).customer_phone
+        run_after_delay(
+            callback_delay_minutes * 60,
+            call,
+            to_number=customer_phone,
+        )
 
         order.status = StatusEnum.CALL_BACK_REQUESTED  # You need to define this enum value
         order.conversation += f"\t✅ [call_back] 200 Success\n"
         order.save()
+
         log.info(f"[call_back] 200 {session_id}")
+
         return {"status": "success", "message": "Callback requested."}
+
     except Exception as e:
         order.conversation += f"\t❌ [call_back] error {e}\n"
         order.save()
         log.exception(f"[call_back] error {e}")
         return {"status": "error", "message": f"Could not request callback: {e}"}
+    
+
+# @to_async
+# def call_back(session_id: str, duration: int) -> dict[str, Any]:
+#     """
+#     Flags the current order/session as requiring a callback from the restaurant.
+
+#     Args:
+#         session_id (str): Unique identifier for the order session.
+
+#     Returns:
+#         dict[str, Any]: A dictionary indicating success or failure of the callback request,
+#                         including relevant messages.
+#     """
+#     try:
+#         order = get_or_create_order(session_id)
+#         if not order:
+#             return {"status": "error", "message": "Order not found."}
+#         customer_phone = get_or_create_order(session_id).customer_phone
+#         run_after_delay(10 * 60, callback, user_id=session_id)      # 10 min
+
+#         order.status = StatusEnum.CALL_BACK_REQUESTED  # You need to define this enum value
+#         order.conversation += f"\t✅ [call_back] 200 Success\n"
+#         order.save()
+
+#         log.info(f"[call_back] 200 {session_id}")
+
+#         return {"status": "success", "message": "Callback requested."}
+
+#     except Exception as e:
+#         order.conversation += f"\t❌ [call_back] error {e}\n"
+#         order.save()
+#         log.exception(f"[call_back] error {e}")
+#         return {"status": "error", "message": f"Could not request callback: {e}"}

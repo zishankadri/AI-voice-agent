@@ -9,7 +9,9 @@ from .logger import get_logger
 log = get_logger()
 
 load_dotenv()
-DEVELOPMENT = os.getenv("development", "false").lower() == "true"
+
+DEVELOPMENT = os.getenv("DEVELOPMENT", "false").lower() == "true"
+
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel('gemini-2.0-flash')
 
@@ -21,11 +23,12 @@ APP_NAME = "voice_agent"
 
 
 # ------------------ 🤝 Helpers ------------------ 
-def get_or_create_order(call_sid: str, phone_number: str) -> Order:
+def get_or_create_order(call_sid: str, phone_number: str, customer_phone) -> Order:
     restaurant = Restaurant.objects.get(phone_number=phone_number)
     order, _ = Order.objects.get_or_create(
         call_sid=call_sid,
         restaurant=restaurant,
+        customer_phone=customer_phone,
     )
     return order
 
@@ -70,11 +73,18 @@ def process_speech(request):
     if DEVELOPMENT: 
         print("DEVELOPMENT")
         to_number = request.POST.get("From")
-    else: to_number = request.POST.get("To")
+        from_number = request.POST.get("To")
+    else:
+        to_number = request.POST.get("To")
+        from_number = request.POST.get("From")
 
     transcript = request.POST.get("SpeechResult", "")
 
-    order = get_or_create_order(call_sid=call_id, phone_number=to_number)
+    order = get_or_create_order(
+        call_sid=call_id,
+        phone_number=to_number,
+        customer_phone=from_number
+    )
 
     if order:
         order.conversation += f"👋 [User]: \n\t {transcript}\n🤖 [Agent]: \n"
@@ -91,7 +101,11 @@ def process_speech(request):
     )
     log.info(f"success {agent_response}")
     # Re-fetch to get the latest order state in case it was modified by a tool.
-    order = get_or_create_order(call_sid=call_id, phone_number=to_number)  
+    order = get_or_create_order(
+        call_sid=call_id,
+        phone_number=to_number,
+        customer_phone=from_number
+    )
     order.conversation += f"\t{agent_response}\n"  # 🤖 [Agent] response
     order.save()
 
