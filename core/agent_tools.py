@@ -15,6 +15,7 @@ from .models import (
     OrderItem,
     MenuItem,
     StatusEnum,
+    Branch
 )
 
 # Scheduler
@@ -42,6 +43,24 @@ def find_menu_item_by_name(name: str) -> MenuItem | None:
     if matches:
         return MenuItem.objects.filter(name=matches[0]).first()
     return None
+
+def find_branch_by_name(name: str, restaurant: Restaurant) -> Branch | None:
+    """
+    Finds a branch by name for a specific restaurant using fuzzy matching.
+
+    Args:
+        name (str): The name of the branch to search for.
+        restaurant (Restaurant): The restaurant instance whose branches to search.
+
+    Returns:
+        Branch | None: The matched Branch instance or None if not found.
+    """
+    all_names = Branch.objects.filter(restaurant=restaurant).values_list('name', flat=True)
+    print("\n\nbranch_names\n: ", list(all_names))
+    matches = get_close_matches(name, all_names, n=1, cutoff=0.8)
+    if matches:
+        return Branch.objects.filter(restaurant=restaurant, name=matches[0]).first()
+    return
 
 def to_async(func: Callable[..., Any]) -> Callable[..., Any]:
     """
@@ -322,13 +341,18 @@ def set_pick_up_branch(session_id: str, branch_name: str, time: str) -> dict[str
         dict[str, Any]: A dictionary indicating success or failure of setting pickup details,
                         including relevant messages.
     """
+    
     try:
         order = get_or_create_order(session_id)
         if not order:
             return {"status": "error", "message": "Order not found."}
+        
+        branch = find_branch_by_name(branch_name, order.restaurant)
+        if not branch:
+            return {"status": "error", "message": f"branch '{branch_name}' not found."}
 
         order.order_type = 'pickup'
-        order.pickup_branch = branch_name  # ensure this field exists
+        order.pickup_branch = branch.name  # ensure this field exists
         order.pickup_time = time            # parse to DateTime if needed
 
         order.conversation += f"\t✅ [set_pick_up_branch] 200 Success\n"

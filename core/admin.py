@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Order, OrderItem, MenuItem, AdminSetting, Restaurant, Category
+from .models import Order, OrderItem, MenuItem, AdminSetting, Restaurant, Category, Branch
 from unfold.admin import ModelAdmin
 
 from import_export import resources
@@ -68,4 +68,10 @@ class MenuItemAdmin(ImportExportModelAdmin, ModelAdmin):
 class AdminSettingAdmin(ModelAdmin):
     list_display = ("key", "value")
     search_fields = ("key",)
+
+@admin.register(Branch)
+class BranchAdmin(ModelAdmin):
+    pass
+    # list_display = ("key", "value")
+    # search_fields = ("key",)
 

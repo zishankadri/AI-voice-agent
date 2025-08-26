@@ -22,6 +22,13 @@ class Restaurant(models.Model):
     def __str__(self):
         return self.name
 
+class Branch(models.Model):
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='branches')
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.name} ({self.restaurant.name})"
+
 
 class Order(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, null=True, blank=True)
