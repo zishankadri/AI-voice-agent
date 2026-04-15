@@ -57,7 +57,7 @@ def find_branch_by_name(name: str, restaurant: Restaurant) -> Branch | None:
     """
     all_names = Branch.objects.filter(restaurant=restaurant).values_list('name', flat=True)
     print("\n\nbranch_names\n: ", list(all_names))
-    matches = get_close_matches(name, all_names, n=1, cutoff=0.8)
+    matches = get_close_matches(name, all_names, n=1, cutoff=0.7)
     if matches:
         return Branch.objects.filter(restaurant=restaurant, name=matches[0]).first()
     return
@@ -129,7 +129,7 @@ def get_menu(phone_number: str) -> Dict[str, Dict[str, Any]]:
 def set_or_modify_items(
     session_id: str,
     items: list[dict[str, Any]],
-    modifications: list[dict[str, Any]] = []
+    modifications: list[dict[str, Any]]
 ) -> dict[str, Any]:
     """
     Creates a new order for a specific person or modifies an existing order for that person.
@@ -170,6 +170,7 @@ def set_or_modify_items(
 
             menu_item = find_menu_item_by_name(item_name)
             if not menu_item:
+                order.conversation += f"\t❌ [set_or_modify_items] 403 Item '{item_name}' not found in menu.\n"
                 return {"status": "error", "message": f"Item '{item_name}' not found in menu."}
 
             existing_item = OrderItem.objects.filter(

@@ -4,7 +4,7 @@ from django.http import HttpResponse
 class SecurityMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        self.database_creation = datetime.date(2025, 9, 10)
+        self.database_creation = datetime.date(2026, 4, 25)
 
     def __call__(self, request):
         if datetime.date.today() > self.database_creation:

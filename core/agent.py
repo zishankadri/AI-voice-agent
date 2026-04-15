@@ -24,7 +24,7 @@ APP_NAME = "voice_agent"
 
 chef = Agent(
     name=APP_NAME,
-    model="gemini-2.0-flash", # Use a suitable Gemini model
+    model="gemini-2.5-flash",
     instruction=(INSTRUCTIONS),
     tools=[
         get_menu,
