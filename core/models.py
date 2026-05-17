@@ -12,7 +12,7 @@ class StatusEnum(models.TextChoices):
     COMPLETED = "COMPLETED", "Completed"
     CANCELLED = "CANCELLED", "Cancelled"
     FAILED = "FAILED", "Failed"
-    CALL_BACK_REQUESTED= "CALL_BACK_REQUESTED", "Call Back Requested"
+    CALL_BACK_REQUESTED = "CALL_BACK_REQUESTED", "Call Back Requested"
 
 
 class Restaurant(models.Model):
@@ -22,8 +22,11 @@ class Restaurant(models.Model):
     def __str__(self):
         return self.name
 
+
 class Branch(models.Model):
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='branches')
+    restaurant = models.ForeignKey(
+        Restaurant, on_delete=models.CASCADE, related_name="branches"
+    )
     name = models.CharField(max_length=255)
 
     def __str__(self):
@@ -31,31 +34,40 @@ class Branch(models.Model):
 
 
 class Order(models.Model):
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, null=True, blank=True)
+    restaurant = models.ForeignKey(
+        Restaurant, on_delete=models.CASCADE, null=True, blank=True
+    )
     customer_phone = models.CharField(max_length=20)
     call_sid = models.CharField(max_length=64, unique=True)
-    conversation = models.TextField(default="", blank=True)
+    # conversation = models.TextField(default="", blank=True)
+    conversation = models.JSONField(default=list)
     status = models.CharField(
-        max_length=32,
-        choices=StatusEnum.choices,
-        default=StatusEnum.PENDING
+        max_length=32, choices=StatusEnum.choices, default=StatusEnum.PENDING
     )
     created_at = models.DateTimeField(auto_now_add=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     order_type = models.CharField(
         max_length=32,
-        choices=[('delivery', 'Delivery'), ('pickup', 'Pickup'), ('table_booking', 'Table Booking')],
+        choices=[
+            ("delivery", "Delivery"),
+            ("pickup", "Pickup"),
+            ("table_booking", "Table Booking"),
+        ],
         blank=True,
-        null=True
+        null=True,
     )
 
-    no_of_people = models.PositiveIntegerField(blank=True, null=True)  # for table bookings
+    no_of_people = models.PositiveIntegerField(
+        blank=True, null=True
+    )  # for table bookings
     booking_time = models.CharField(max_length=100, blank=True, null=True)
     # booking_time = models.DateTimeField(blank=True, null=True)         # for table bookings
-    pickup_branch = models.CharField(max_length=255, blank=True, null=True)  # for pickup orders
+    pickup_branch = models.CharField(
+        max_length=255, blank=True, null=True
+    )  # for pickup orders
     # pickup_time = models.DateTimeField(blank=True, null=True)               # for pickup orders
     pickup_time = models.CharField(max_length=100, blank=True, null=True)
-    
+
     def __str__(self):
         return f"Order #{self.id}"
 
@@ -70,15 +82,18 @@ class Category(models.Model):
 class MenuItem(models.Model):
     # restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='menu_items')
     # category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='menu_items')
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, null=True, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True)
+    restaurant = models.ForeignKey(
+        Restaurant, on_delete=models.CASCADE, null=True, blank=True
+    )
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, null=True, blank=True
+    )
 
     name = models.CharField(max_length=100)
     price = models.FloatField()
 
     def __str__(self):
         return f"{self.name}"
-
 
 
 class OrderItem(models.Model):
@@ -90,16 +105,14 @@ class OrderItem(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['order', 'menu_item'], name='unique_item_per_order'
+                fields=["order", "menu_item"], name="unique_item_per_order"
             )
         ]
 
     def __str__(self):
         return f"{self.quantity} x {self.menu_item.name} (Order #{self.order.id})"
 
-    
 
-# models.py
 class AdminSetting(models.Model):
     key = models.CharField(max_length=100, unique=True)
     value = models.TextField()
