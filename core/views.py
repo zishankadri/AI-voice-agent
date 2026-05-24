@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from pydantic_ai import ModelRequest, ModelResponse, TextPart, UserPromptPart
 from twilio.twiml.voice_response import VoiceResponse, Gather
 from dotenv import load_dotenv
-import google.generativeai as genai
+# import google.generativeai as genai
 
 from .logger import get_logger
 
@@ -17,7 +17,8 @@ DEVELOPMENT = os.getenv("DEVELOPMENT", "false").lower() == "true"
 # model = genai.GenerativeModel("gemini-2.0-flash")
 
 from .models import Order, Restaurant, AdminSetting, StatusEnum  # update import path
-from .agent import get_or_create_agent_session, ask_agent  # same here
+
+# from .agent import get_or_create_agent_session, ask_agent  # same here
 from .tools import agent, OrderDeps, format_menu_for_instructions  # and here
 
 # USER_ID = "CUSTOMER"
