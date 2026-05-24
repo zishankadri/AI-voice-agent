@@ -30,7 +30,7 @@ class OrderDeps:
 
 
 agent = Agent(
-    "google:gemini-3-flash-preview",
+    "openai:gpt-5-mini",
     deps_type=OrderDeps,
     system_prompt=INSTRUCTIONS,
 )

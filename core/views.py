@@ -77,6 +77,7 @@ def process_speech(request):
         to_number = request.POST.get("To")
         from_number = request.POST.get("From")
     print(f"{from_number = }\n{to_number = }")
+    log.info(f"{from_number = }\n{to_number = }")
 
     # order, _ = Order.objects.get_or_create(call_sid=call_id)
     order = get_or_create_order(
